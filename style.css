@@ -1,0 +1,144 @@
+/* GH-300 勉強アプリ — iOS版（SwiftUI）と共通のデザイン言語
+   - 背景: iOSグループリスト風 #f2f2f7
+   - カード: 白、角丸12px、境界線で区切る
+   - アクセント: インディゴ #5b5bd6
+   - 正解: 緑 / 不正解: 赤 */
+:root {
+  --bg: #f2f2f7;
+  --card: #ffffff;
+  --text: #1c1c1e;
+  --muted: #6e6e73;
+  --separator: #d9d9de;
+  --accent: #5b5bd6;
+  --accent-soft: rgba(91, 91, 214, 0.12);
+  --green: #248a3d;
+  --green-soft: rgba(36, 138, 61, 0.15);
+  --red: #d70015;
+  --red-soft: rgba(215, 0, 21, 0.12);
+  --radius: 12px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+.app-header {
+  position: sticky;
+  top: 0;
+  background: rgba(242, 242, 247, 0.92);
+  backdrop-filter: blur(8px);
+  padding: calc(env(safe-area-inset-top, 0px) + 12px) 16px 8px;
+  z-index: 10;
+}
+.app-header h1 { font-size: 1.55rem; margin: 0; }
+
+main {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 8px 16px calc(96px + env(safe-area-inset-bottom, 0px));
+}
+
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.list-card { padding: 4px 16px; }
+.list-card .row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--separator);
+}
+.list-card .row:last-child { border-bottom: none; }
+.row .value { color: var(--muted); white-space: nowrap; }
+
+a.row, button.row { width: 100%; background: none; border: none; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+button.row .value::after { content: " ›"; }
+
+.section-title { font-size: 1.05rem; margin: 20px 4px 8px; }
+.muted { color: var(--muted); }
+.small { font-size: 0.82rem; }
+.big-number { font-size: 2.4rem; font-weight: 700; margin: 4px 0; }
+.big-number small { font-size: 1.1rem; font-weight: 600; }
+.review-card h2 { margin-top: 0; font-size: 1.05rem; }
+
+.btn {
+  display: inline-block;
+  border: 1px solid var(--separator);
+  background: var(--card);
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.95rem;
+  padding: 9px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: center;
+}
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.ghost { border: none; background: none; padding: 6px 8px; }
+.btn-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 8px; }
+
+/* 演習画面 */
+.practice-head {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+}
+.practice-title { font-weight: 600; flex: 1; text-align: center; }
+.q-domain { font-size: 0.82rem; margin: 0 0 6px; }
+.q-text { font-size: 1.05rem; font-weight: 600; line-height: 1.6; margin: 0 0 16px; }
+.choices { display: flex; flex-direction: column; gap: 10px; }
+.choice {
+  display: flex; gap: 10px; align-items: flex-start;
+  width: 100%; text-align: left; font: inherit; color: inherit;
+  background: var(--bg); border: 2px solid transparent;
+  border-radius: 10px; padding: 12px 14px; cursor: pointer; line-height: 1.5;
+}
+.choice .letter { font-weight: 700; }
+.choice.selected { background: var(--accent-soft); }
+.choice.correct { background: var(--green-soft); }
+.choice.wrong { background: var(--red-soft); }
+.choice:disabled { cursor: default; opacity: 1; }
+.feedback { margin-top: 18px; }
+.feedback h3 { font-size: 0.95rem; margin: 14px 0 6px; }
+.feedback hr { border: none; border-top: 1px solid var(--separator); margin: 14px 0; }
+.q-result { font-weight: 700; font-size: 1.05rem; }
+.q-result.ok { color: var(--green); }
+.q-result.ng { color: var(--red); }
+.grade-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn.grade { color: var(--text); flex: 1; min-width: 70px; }
+
+/* 完了画面 */
+.done-card { text-align: center; padding: 36px 16px; }
+.done-icon { font-size: 2.6rem; color: var(--green); margin: 0; }
+
+/* タブバー */
+.tabbar {
+  position: fixed; left: 0; right: 0; bottom: 0;
+  display: flex; justify-content: center; gap: 12px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(8px);
+  border-top: 1px solid var(--separator);
+  padding: 6px 12px calc(6px + env(safe-area-inset-bottom, 0px));
+  z-index: 10;
+}
+.tab {
+  flex: 1; max-width: 220px;
+  background: none; border: none; font-size: 1.15rem; cursor: pointer;
+  color: var(--muted); display: flex; flex-direction: column; align-items: center; gap: 1px;
+  padding: 4px 0;
+}
+.tab span { font-size: 0.68rem; }
+.tab.active { color: var(--accent); }
+
+@media (min-width: 721px) {
+  .app-header h1 { max-width: 720px; margin: 0 auto; }
+}
