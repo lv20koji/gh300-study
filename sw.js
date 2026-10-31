@@ -1,6 +1,6 @@
 /* Service Worker: アプリ本体と問題データをキャッシュし、オフラインでも動くようにする。
    questions.json はネットワーク優先（問題の更新を取り込みやすく）、それ以外はキャッシュ優先。 */
-const CACHE_NAME = "study-app-v3";
+const CACHE_NAME = "study-app-v4";
 const APP_SHELL = [
   "./",
   "./index.html",

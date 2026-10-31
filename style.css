@@ -1,21 +1,24 @@
-/* 資格勉強ポータル — iOS版（SwiftUI）と共通のデザイン言語
-   - 背景: iOSグループリスト風 #f2f2f7
-   - カード: 白、角丸12px、境界線で区切る
-   - アクセント: インディゴ #5b5bd6
-   - 正解: 緑 / 不正解: 赤 */
+/* 資格勉強ポータル — デザイン v4「勉強机の答案用紙」
+   frontend-design スキルの方針で再設計 (2026-10-31):
+   - モチーフは資格勉強の道具立て: 方眼ノート / 青ペン・赤ペン / マークシート / ハンコ
+   - 背景: 罫線入りの方眼紙。カード: 白い用紙（細い境界線＋小さめの角丸、影は最小）
+   - 署名要素は1つだけ: 連続学習日数を「赤ペンのハンコ」で押すストリーク表示
+   - 選択肢の英字はマークシートの円。選ぶと鉛筆で塗ったように円が満ちる
+   - 色: 紙 #f2f4f2 / 墨 #20242c / 青ペン #2f4bd7 / 赤ペン #d23c28 / 正解の緑 #1e7a3c */
 :root {
-  --bg: #f2f2f7;
+  --bg: #f2f4f2;
+  --grid: rgba(47, 75, 215, 0.055);
   --card: #ffffff;
-  --text: #1c1c1e;
-  --muted: #6e6e73;
-  --separator: #d9d9de;
-  --accent: #5b5bd6;
-  --accent-soft: rgba(91, 91, 214, 0.12);
-  --green: #248a3d;
-  --green-soft: rgba(36, 138, 61, 0.15);
-  --red: #d70015;
-  --red-soft: rgba(215, 0, 21, 0.12);
-  --radius: 12px;
+  --text: #20242c;
+  --muted: #666c76;
+  --separator: #dde0d8;
+  --accent: #2f4bd7;
+  --accent-soft: rgba(47, 75, 215, 0.1);
+  --green: #1e7a3c;
+  --green-soft: rgba(30, 122, 60, 0.13);
+  --red: #d23c28;
+  --red-soft: rgba(210, 60, 40, 0.1);
+  --radius: 10px;
 }
 
 * { box-sizing: border-box; }
@@ -23,20 +26,27 @@
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", "Segoe UI", sans-serif;
-  background: var(--bg);
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 28px 28px;
   color: var(--text);
   -webkit-font-smoothing: antialiased;
 }
 
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
 .app-header {
   position: sticky;
   top: 0;
-  background: rgba(242, 242, 247, 0.92);
+  background: rgba(242, 244, 242, 0.92);
   backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--separator);
   padding: calc(env(safe-area-inset-top, 0px) + 12px) 16px 8px;
   z-index: 10;
 }
-.app-header h1 { font-size: 1.55rem; margin: 0; }
+.app-header h1 { font-size: 1.55rem; margin: 0; letter-spacing: -0.01em; }
 
 main {
   max-width: 720px;
@@ -46,6 +56,7 @@ main {
 
 .card {
   background: var(--card);
+  border: 1px solid var(--separator);
   border-radius: var(--radius);
   padding: 16px;
   margin-bottom: 16px;
@@ -68,7 +79,7 @@ button.row .value::after { content: " ›"; }
 .section-title { font-size: 1.05rem; margin: 20px 4px 8px; }
 .muted { color: var(--muted); }
 .small { font-size: 0.82rem; }
-.big-number { font-size: 2.4rem; font-weight: 700; margin: 4px 0; }
+.big-number { font-size: 2.4rem; font-weight: 700; margin: 4px 0; font-variant-numeric: tabular-nums; }
 .big-number small { font-size: 1.1rem; font-weight: 600; }
 .review-card h2 { margin-top: 0; font-size: 1.05rem; }
 
@@ -80,7 +91,7 @@ button.row .value::after { content: " ›"; }
   font: inherit;
   font-size: 0.95rem;
   padding: 9px 16px;
-  border-radius: 10px;
+  border-radius: 9px;
   cursor: pointer;
   text-align: center;
 }
@@ -93,19 +104,29 @@ button.row .value::after { content: " ›"; }
   display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
 }
 .practice-title { font-weight: 600; flex: 1; text-align: center; }
-.q-domain { font-size: 0.82rem; margin: 0 0 6px; }
-.q-text { font-size: 1.05rem; font-weight: 600; line-height: 1.6; margin: 0 0 16px; }
+.q-domain { font-size: 0.82rem; margin: 0 0 6px; color: var(--accent); font-weight: 600; }
+.q-text { font-size: 1.05rem; font-weight: 600; line-height: 1.7; margin: 0 0 16px; }
 .choices { display: flex; flex-direction: column; gap: 10px; }
 .choice {
   display: flex; gap: 10px; align-items: flex-start;
   width: 100%; text-align: left; font: inherit; color: inherit;
-  background: var(--bg); border: 2px solid transparent;
+  background: #fbfbf9; border: 1px solid var(--separator);
   border-radius: 10px; padding: 12px 14px; cursor: pointer; line-height: 1.5;
 }
-.choice .letter { font-weight: 700; }
-.choice.selected { background: var(--accent-soft); }
-.choice.correct { background: var(--green-soft); }
-.choice.wrong { background: var(--red-soft); }
+/* マークシートの円: 選ぶと塗りつぶされる */
+.choice .letter {
+  flex: none; width: 1.55rem; height: 1.55rem; margin-top: 0.05rem;
+  border: 1.5px solid var(--muted); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 0.85rem; color: var(--text);
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.choice.selected { background: var(--accent-soft); border-color: var(--accent); }
+.choice.selected .letter { background: var(--text); border-color: var(--text); color: #fff; }
+.choice.correct { background: var(--green-soft); border-color: var(--green); }
+.choice.correct .letter { background: var(--green); border-color: var(--green); color: #fff; }
+.choice.wrong { background: var(--red-soft); border-color: var(--red); }
+.choice.wrong .letter { background: var(--red); border-color: var(--red); color: #fff; }
 .choice:disabled { cursor: default; opacity: 1; }
 .feedback { margin-top: 18px; }
 .feedback h3 { font-size: 0.95rem; margin: 14px 0 6px; }
@@ -143,7 +164,7 @@ button.row .value::after { content: " ›"; }
   .app-header h1 { max-width: 720px; margin: 0 auto; }
 }
 
-/* ===== v2: ポータル・科目カード・ロードマップ ===== */
+/* ===== ポータル・科目カード・ロードマップ ===== */
 .subject-heading { font-size: 1.3rem; margin: 10px 4px 12px; }
 .subject-card h3 { margin: 2px 0 10px; font-size: 1.1rem; }
 .subject-stats { display: flex; flex-wrap: wrap; gap: 6px 18px; color: var(--muted); font-size: 0.92rem; margin-bottom: 14px; }
@@ -174,15 +195,15 @@ button.row .value::after { content: " ›"; }
 .step-desc { color: var(--muted); font-size: 0.8rem; line-height: 1.45; }
 .step-action { flex: none; }
 
-/* ===== v2: 不正解のつまずきポイント・出典 ===== */
+/* ===== 不正解のつまずきポイント・出典 ===== */
 .wrong-note {
-  background: var(--red-soft); border-radius: 8px;
+  background: var(--red-soft); border-left: 3px solid var(--red); border-radius: 0 8px 8px 0;
   padding: 10px 12px; font-weight: 600; font-size: 0.92rem; line-height: 1.55;
   margin: 10px 0;
 }
 .q-source { margin-top: 8px; line-height: 1.5; }
 
-/* ===== v2: ミニテスト結果の振り返り ===== */
+/* ===== ミニテスト結果の振り返り ===== */
 .review-item { padding: 12px 0; border-bottom: 1px solid var(--separator); }
 .review-item:last-child { border-bottom: none; padding-bottom: 2px; }
 .review-item .q-result { margin: 0 0 4px; font-size: 0.95rem; }
@@ -217,12 +238,21 @@ button.row .value::after { content: " ›"; }
     animation: none !important;
     transition: none !important;
   }
+  .streak-line strong { transform: none; }
 }
 
-/* ===== v3: 学習の記録（ストリーク・カレンダー・フォーキャスト） ===== */
+/* ===== 学習の記録（ストリーク・カレンダー・フォーキャスト） ===== */
 .activity-card h2 { margin-top: 0; font-size: 1.05rem; }
 .streak-line { font-size: 1.05rem; margin: 4px 0 12px; }
-.streak-line strong { color: var(--accent); font-size: 1.2rem; }
+/* 署名要素: 連続日数は赤ペンのハンコで押す */
+.streak-line strong {
+  display: inline-block;
+  color: var(--red); font-size: 1.15rem; font-weight: 800;
+  border: 2px solid var(--red); border-radius: 6px;
+  padding: 0 0.32em; margin: 0 0.1em;
+  background: rgba(210, 60, 40, 0.05);
+  transform: rotate(-2.5deg);
+}
 .cal-grid {
   display: grid; grid-template-columns: repeat(14, 1fr); gap: 4px;
   margin-bottom: 8px;
@@ -236,7 +266,7 @@ button.row .value::after { content: " ›"; }
 .forecast-line { font-size: 0.92rem; margin: 10px 0 0; font-weight: 600; }
 .exam-line { font-weight: 600; color: var(--accent); margin: 0 0 12px; }
 
-/* ===== v3: 試験日カウントダウン ===== */
+/* ===== 試験日カウントダウン ===== */
 .exam-card h2 { margin-top: 0; font-size: 1.05rem; }
 .exam-set { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 10px; }
 .exam-set input[type="date"] {
@@ -245,5 +275,5 @@ button.row .value::after { content: " ›"; }
   padding: 7px 10px; background: var(--card);
 }
 
-/* ===== v3: 間違いノート ===== */
+/* ===== 間違いノート ===== */
 .note-item .btn { margin-top: 4px; }
