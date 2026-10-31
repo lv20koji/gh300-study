@@ -1,4 +1,4 @@
-/* GH-300 勉強アプリ — iOS版（SwiftUI）と共通のデザイン言語
+/* 資格勉強ポータル — iOS版（SwiftUI）と共通のデザイン言語
    - 背景: iOSグループリスト風 #f2f2f7
    - カード: 白、角丸12px、境界線で区切る
    - アクセント: インディゴ #5b5bd6
@@ -141,4 +141,80 @@ button.row .value::after { content: " ›"; }
 
 @media (min-width: 721px) {
   .app-header h1 { max-width: 720px; margin: 0 auto; }
+}
+
+/* ===== v2: ポータル・科目カード・ロードマップ ===== */
+.subject-heading { font-size: 1.3rem; margin: 10px 4px 12px; }
+.subject-card h3 { margin: 2px 0 10px; font-size: 1.1rem; }
+.subject-stats { display: flex; flex-wrap: wrap; gap: 6px 18px; color: var(--muted); font-size: 0.92rem; margin-bottom: 14px; }
+.subject-stats strong { color: var(--text); }
+.flow-card { padding: 12px 16px; }
+.flow-strip { margin: 0; font-size: 0.9rem; line-height: 1.7; color: var(--muted); }
+.flow-strip strong { color: var(--text); }
+
+.roadmap-card h2 { margin-top: 0; font-size: 1.05rem; }
+.roadmap-card .btn.primary { margin-bottom: 14px; }
+.roadmap-steps { display: flex; flex-direction: column; }
+.roadmap-step {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 8px; border-top: 1px solid var(--separator);
+  border-radius: 8px;
+}
+.roadmap-step.current { background: var(--accent-soft); }
+.step-badge {
+  flex: none; width: 26px; height: 26px; border-radius: 50%;
+  border: 2px solid var(--separator); color: var(--muted);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.85rem; font-weight: 700; background: var(--card);
+}
+.roadmap-step.done .step-badge { background: var(--green); border-color: var(--green); color: #fff; }
+.roadmap-step.current .step-badge { border-color: var(--accent); color: var(--accent); }
+.step-body { flex: 1; min-width: 0; }
+.step-title { font-weight: 600; font-size: 0.95rem; }
+.step-desc { color: var(--muted); font-size: 0.8rem; line-height: 1.45; }
+.step-action { flex: none; }
+
+/* ===== v2: 不正解のつまずきポイント・出典 ===== */
+.wrong-note {
+  background: var(--red-soft); border-radius: 8px;
+  padding: 10px 12px; font-weight: 600; font-size: 0.92rem; line-height: 1.55;
+  margin: 10px 0;
+}
+.q-source { margin-top: 8px; line-height: 1.5; }
+
+/* ===== v2: ミニテスト結果の振り返り ===== */
+.review-item { padding: 12px 0; border-bottom: 1px solid var(--separator); }
+.review-item:last-child { border-bottom: none; padding-bottom: 2px; }
+.review-item .q-result { margin: 0 0 4px; font-size: 0.95rem; }
+.review-q { font-weight: 600; line-height: 1.6; margin: 0 0 6px; }
+.review-item p { margin: 4px 0; line-height: 1.6; }
+
+.row.disabled { opacity: 0.45; pointer-events: none; }
+#practice-timer { font-variant-numeric: tabular-nums; }
+
+/* ===== モーション（軽量なCSSのみ） ===== */
+.screen:not([hidden]) { animation: screen-in 0.28s ease both; }
+@keyframes screen-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+#practice-card.card-in { animation: card-in 0.25s ease both; }
+@keyframes card-in {
+  from { opacity: 0; transform: translateX(16px); }
+  to { opacity: 1; transform: none; }
+}
+.feedback:not([hidden]) { animation: fade-up 0.3s ease both; }
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.btn, .choice, .tab { transition: transform 0.08s ease, background-color 0.15s ease, opacity 0.15s ease; }
+.btn:active, .tab:active { transform: scale(0.97); }
+.choice:active { transform: scale(0.98); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
 }
