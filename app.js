@@ -768,6 +768,7 @@ const Practice = {
     }
     document.getElementById("q-explanation").textContent = q.explanation;
     document.getElementById("q-source").textContent = q.source || "";
+    this.prepNextBtn();
     document.getElementById("q-feedback").hidden = false;
   },
 
@@ -785,7 +786,30 @@ const Practice = {
     document.getElementById("q-explanation").textContent = q.explanation;
     document.getElementById("q-source").textContent = q.source || "";
     document.getElementById("q-flash").hidden = true;
+    this.prepNextBtn();
     document.getElementById("q-feedback").hidden = false;
+  },
+
+  // フィードバック表示時に「次へ」ボタンのラベルを最終問題かどうかで切り替える
+  prepNextBtn() {
+    document.getElementById("btn-next-question").textContent =
+      this.index + 1 < this.queue.length ? "次へ" : "結果を見る";
+  },
+
+  // --- 「次へ」: 自己評価は任意。付けずに進む場合は標準評価で記録する ---
+  nextDefault() {
+    if (this.mode === "flashcard") {
+      // フラッシュカードは自己申告が本体なので、未評価では数えずに進むだけ
+      if (this.index + 1 < this.queue.length) {
+        this.index += 1;
+        this.renderQuestion();
+      } else {
+        this.finish();
+      }
+      return;
+    }
+    // grade() 側で不正解は自動的に "again" になるため、正解・不正解とも "good" でよい
+    this.grade("good");
   },
 
   // --- 自己評価（通常・弱点・復習・新規・フラッシュカード共通） ---
@@ -1318,6 +1342,7 @@ document.getElementById("btn-quit-practice").addEventListener("click", () => Pra
 document.getElementById("btn-done-home").addEventListener("click", () => { renderSubject(); showScreen("subject"); });
 document.getElementById("btn-flash-reveal").addEventListener("click", () => Practice.revealFlash());
 document.getElementById("btn-test-next").addEventListener("click", () => Practice.testNext());
+document.getElementById("btn-next-question").addEventListener("click", () => Practice.nextDefault());
 document.querySelectorAll(".btn.grade").forEach((btn) => {
   btn.addEventListener("click", () => Practice.grade(btn.dataset.grade));
 });

@@ -136,6 +136,8 @@ button.row .value::after { content: " ›"; }
 .q-result.ng { color: var(--red); }
 .grade-row { display: flex; flex-wrap: wrap; gap: 8px; }
 .btn.grade { color: var(--text); flex: 1; min-width: 70px; }
+.next-row { margin: 12px 0 10px; }
+.next-row .btn { width: 100%; padding: 12px 16px; font-size: 1rem; font-weight: 600; }
 
 /* 完了画面 */
 .done-card { text-align: center; padding: 36px 16px; }
