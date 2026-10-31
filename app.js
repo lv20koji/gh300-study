@@ -1,11 +1,13 @@
 "use strict";
-/* 資格勉強ポータル（Web版 v2）
+/* 資格勉強ポータル（Web版 v3）
    - 複数科目パック対応（questions.json の subjects 配列）
    - 進捗・セッションは科目ごとに localStorage へ分離保存
      キー: studyapp.progress.v2.<科目ID> / studyapp.sessions.v2.<科目ID>
    - GH-300 の v1 キー（gh300study.*.v1）があれば初回に v2 へ引き継ぐ（v1は消さない）
    - SRS: SM-2方式（v1と同一ルール）
-   - 書き出し/読み込み: 全科目を含む v2 スキーマ（v1形式の読み込みにも対応） */
+   - 書き出し/読み込み: 全科目を含む v2 スキーマ（v1形式の読み込みにも対応）
+   - v3追加: 学習ストリーク＋カレンダー、復習フォーキャスト、間違いノート、試験日カウントダウン
+     （いずれも既存の端末内データからの表示のみ。試験日は studyapp.examdate.v3.<科目ID> に保存） */
 
 // ============================================================
 // 定数
@@ -19,10 +21,12 @@ const LETTERS = ["A", "B", "C", "D"];
 const MODE_LABELS = {
   review: "復習", practice: "演習", new: "新規問題",
   weak: "弱点集中", test: "ミニテスト", flashcard: "フラッシュカード",
+  note: "間違いノート",
 };
 const TEST_SIZE = 10;
 const WEAK_SIZE = 20;
 const FLASH_SIZE = 20;
+const NOTE_SIZE = 30;
 
 // ============================================================
 // SRS（SM-2）— v1と同一ルール
@@ -201,14 +205,102 @@ function subjectTotals(pack) {
 }
 
 // ============================================================
+// v3: 学習ストリーク / カレンダー / 復習フォーキャスト（既存ログからの集計のみ）
+// ============================================================
+function dayKeyOf(date) {
+  const d = new Date(date);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+// 全科目のセッション記録から、学習した日の集合を作る
+function studyDaySet() {
+  const days = new Set();
+  for (const pack of packs) {
+    for (const s of Store.data[pack.id].sessions) days.add(dayKeyOf(s.startedAt));
+  }
+  return days;
+}
+
+function streakInfo() {
+  const days = studyDaySet();
+  if (days.size === 0) return { current: 0, longest: 0, total: 0 };
+  const sorted = [...days].sort();
+  // 最長連続
+  let longest = 1, run = 1;
+  for (let i = 1; i < sorted.length; i++) {
+    const prev = SRS.addDays(new Date(sorted[i - 1] + "T00:00:00"), 1);
+    if (dayKeyOf(prev) === sorted[i]) { run += 1; longest = Math.max(longest, run); }
+    else run = 1;
+  }
+  // 現在の連続（今日、まだなら昨日から途切れていないか）
+  let current = 0;
+  let cursor = SRS.startOfDay(new Date());
+  if (!days.has(dayKeyOf(cursor))) cursor = SRS.addDays(cursor, -1);
+  while (days.has(dayKeyOf(cursor))) {
+    current += 1;
+    cursor = SRS.addDays(cursor, -1);
+  }
+  return { current, longest, total: days.size };
+}
+
+// これから先の復習予定（着手済みの問題のみ、全科目合算）
+function forecastCounts() {
+  const today = SRS.startOfDay(new Date());
+  let tomorrow = 0, week = 0;
+  for (const pack of packs) {
+    for (const p of Object.values(Store.data[pack.id].progress)) {
+      if (attemptsOf(p) === 0) continue;
+      const due = SRS.startOfDay(new Date(p.dueDate));
+      const diff = Math.round((due - today) / 86400000);
+      if (diff === 1) tomorrow += 1;
+      else if (diff >= 2 && diff <= 7) week += 1;
+    }
+  }
+  return { tomorrow, week };
+}
+
+// ============================================================
+// v3: 試験日カウントダウン（端末内のみ保存）
+// ============================================================
+const LS_EXAMDATE = (id) => `studyapp.examdate.v3.${id}`;
+
+function examDateOf(pack) {
+  const raw = localStorage.getItem(LS_EXAMDATE(pack.id));
+  if (!raw || !/^\d{4}-\d{2}-\d{2}$/.test(raw)) return null;
+  return raw;
+}
+
+function daysUntilExam(pack) {
+  const raw = examDateOf(pack);
+  if (!raw) return null;
+  const target = SRS.startOfDay(new Date(raw + "T00:00:00"));
+  const diff = Math.round((target - SRS.startOfDay(new Date())) / 86400000);
+  return diff;
+}
+
+// ============================================================
+// v3: 間違いノート（1回以上間違えた問題）
+// ============================================================
+function wrongQuestions(pack) {
+  const d = Store.data[pack.id];
+  return pack.questions
+    .map((q) => ({ q, p: d.progress[q.id] }))
+    .filter(({ p }) => p.wrongCount > 0)
+    .sort((a, b) => {
+      if (a.p.wrongCount !== b.p.wrongCount) return b.p.wrongCount - a.p.wrongCount;
+      return new Date(a.p.dueDate) - new Date(b.p.dueDate);
+    });
+}
+
+// ============================================================
 // 画面遷移
 // ============================================================
-const screens = ["portal", "subject", "practice", "done", "stats"];
+const screens = ["portal", "subject", "practice", "done", "stats", "note"];
 function showScreen(name) {
   for (const s of screens) {
     document.getElementById(`screen-${s}`).hidden = s !== name;
   }
-  document.getElementById("tab-home").classList.toggle("active", name === "portal" || name === "subject");
+  document.getElementById("tab-home").classList.toggle("active", name === "portal" || name === "subject" || name === "note");
   document.getElementById("tab-stats").classList.toggle("active", name === "stats");
   window.scrollTo(0, 0);
 }
@@ -263,9 +355,60 @@ function renderPortal() {
       </div>
       <button class="btn primary" type="button">この科目を勉強する ›</button>`;
     card.querySelector("h3").textContent = pack.name;
+    const days = daysUntilExam(pack);
+    if (days !== null) {
+      const line = document.createElement("p");
+      line.className = "exam-line";
+      const raw = examDateOf(pack);
+      const [, m, dd] = raw.split("-");
+      line.textContent = days > 0
+        ? `🎯 試験まであと ${days} 日（${Number(m)}月${Number(dd)}日）`
+        : days === 0
+          ? `🎯 今日が試験日です（${Number(m)}月${Number(dd)}日）。がんばってください！`
+          : `🎯 試験日（${Number(m)}月${Number(dd)}日）は過ぎました。お疲れさまでした`;
+      card.insertBefore(line, card.querySelector("button"));
+    }
     card.querySelector("button").addEventListener("click", () => openSubject(pack.id));
     box.appendChild(card);
   }
+
+  renderPortalActivity();
+}
+
+// ポータルの「学習の記録」：ストリーク、直近4週間のカレンダー、復習フォーキャスト
+function renderPortalActivity() {
+  const streakEl = document.getElementById("portal-streak");
+  const calEl = document.getElementById("portal-calendar");
+  const fcEl = document.getElementById("portal-forecast");
+  const info = streakInfo();
+  const days = studyDaySet();
+  const todayKey = dayKeyOf(new Date());
+
+  if (info.total === 0) {
+    streakEl.textContent = "まだ学習記録がありません。最初の1問からはじめましょう。";
+  } else {
+    streakEl.innerHTML =
+      `🔥 <strong>${info.current} 日</strong> 連続学習中` +
+      `<span class="muted small">（最長 ${info.longest} 日 ／ 学習した日は合計 ${info.total} 日）</span>`;
+    if (!days.has(todayKey)) {
+      streakEl.innerHTML += `<br><span class="small">今日まだ学習していません。1問だけでも解くと記録が続きます。</span>`;
+    }
+  }
+
+  calEl.innerHTML = "";
+  for (let i = 27; i >= 0; i--) {
+    const d = SRS.addDays(SRS.startOfDay(new Date()), -i);
+    const key = dayKeyOf(d);
+    const cell = document.createElement("div");
+    cell.className = "cal-day" + (days.has(key) ? " on" : "") + (key === todayKey ? " today" : "");
+    cell.title = `${d.getMonth() + 1}月${d.getDate()}日` + (days.has(key) ? "：学習あり" : "");
+    calEl.appendChild(cell);
+  }
+
+  const fc = forecastCounts();
+  const dueTotal = packs.reduce((s, pack) => s + dueReviews(pack).length, 0);
+  fcEl.textContent =
+    `復習の見通し（全科目）：今日 ${dueTotal} 問 ・ 明日 ${fc.tomorrow} 問 ・ あさって〜1週間 ${fc.week} 問`;
 }
 
 // ============================================================
@@ -305,6 +448,8 @@ function renderSubject() {
   addModeRow("ランダムミニテスト（診断）", `${Math.min(TEST_SIZE, cur.questions.length)}問`, () => startTest(), false);
   const weak = weakQuestions(cur);
   addModeRow("弱点集中", weak.length === 0 ? "対象なし" : `${weak.length}問`, () => startWeak(), weak.length === 0);
+  const wrong = wrongQuestions(cur);
+  addModeRow("間違いノート", wrong.length === 0 ? "対象なし" : `${wrong.length}問`, () => { renderNote(); showScreen("note"); }, wrong.length === 0);
   addModeRow("フラッシュカード", `${flashQuestions(cur).length}問`, () => startFlashcard(), false);
 
   // 分野別演習
@@ -327,7 +472,36 @@ function renderSubject() {
   document.getElementById("subj-accuracy").textContent =
     t.accuracy === null ? "—" : `${Math.round(t.accuracy * 100)}%`;
 
+  renderExamCard();
   renderRoadmap();
+}
+
+// 科目画面の「試験日に向けて」カード
+function renderExamCard() {
+  const countEl = document.getElementById("exam-countdown");
+  const subEl = document.getElementById("exam-countdown-sub");
+  const input = document.getElementById("exam-date-input");
+  const days = daysUntilExam(cur);
+  input.value = examDateOf(cur) || "";
+  if (days === null) {
+    countEl.hidden = true;
+    subEl.textContent = "試験日を設定すると、ここに残り日数が表示されます（この端末にだけ保存されます）。";
+    return;
+  }
+  const raw = examDateOf(cur);
+  const [y, m, dd] = raw.split("-").map(Number);
+  const dateLabel = `${y}年${m}月${dd}日`;
+  countEl.hidden = false;
+  if (days > 0) {
+    countEl.innerHTML = `あと ${days} <small>日</small>`;
+    subEl.textContent = `試験日は ${dateLabel} です。ロードマップの現在地を毎日少しずつ進めましょう。`;
+  } else if (days === 0) {
+    countEl.innerHTML = `今日 <small>が試験日</small>`;
+    subEl.textContent = `試験日は ${dateLabel} です。これまでの積み重ねを信じて臨みましょう。`;
+  } else {
+    countEl.innerHTML = `終了 <small>しました</small>`;
+    subEl.textContent = `試験日（${dateLabel}）は過ぎました。次の目標に向けて試験日を更新できます。`;
+  }
 }
 
 // ============================================================
@@ -847,6 +1021,58 @@ function startFlashcard() {
 }
 
 // ============================================================
+// v3: 間違いノート画面
+// ============================================================
+function renderNote() {
+  const items = wrongQuestions(cur);
+  const summary = document.getElementById("note-summary");
+  const allBtn = document.getElementById("btn-note-review-all");
+  const list = document.getElementById("note-list");
+  list.innerHTML = "";
+
+  if (items.length === 0) {
+    summary.textContent = "間違えた問題はまだありません。この調子で進めましょう。";
+    allBtn.hidden = true;
+    return;
+  }
+  summary.textContent = `${cur.name} で1回以上間違えた問題が ${items.length} 問あります。つまずきポイントを確認して、まとめて復習できます。`;
+  allBtn.hidden = false;
+  allBtn.textContent = `✎ 間違えた問題をまとめて復習（最大${Math.min(NOTE_SIZE, items.length)}問）`;
+
+  for (const { q, p } of items) {
+    const card = document.createElement("div");
+    card.className = "card note-item";
+    const meta = document.createElement("p");
+    meta.className = "q-domain muted";
+    meta.textContent = `${domainName(cur, q.domain)} ・ 誤答 ${p.wrongCount} 回（正解 ${p.correctCount} 回）`;
+    card.appendChild(meta);
+    const qt = document.createElement("p");
+    qt.className = "review-q";
+    qt.textContent = q.question;
+    card.appendChild(qt);
+    if (q.wrongNote) {
+      const note = document.createElement("p");
+      note.className = "wrong-note";
+      note.textContent = `つまずきポイント：${q.wrongNote}`;
+      card.appendChild(note);
+    }
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "btn";
+    btn.textContent = "この問題を復習する";
+    btn.addEventListener("click", () => Practice.start("note", [q], "間違いノート"));
+    card.appendChild(btn);
+    list.appendChild(card);
+  }
+}
+
+function startNoteReview() {
+  const queue = wrongQuestions(cur).slice(0, NOTE_SIZE).map(({ q }) => q);
+  if (queue.length === 0) return;
+  Practice.start("note", queue, "間違いノート");
+}
+
+// ============================================================
 // 記録画面
 // ============================================================
 function renderStats() {
@@ -1097,6 +1323,20 @@ document.querySelectorAll(".btn.grade").forEach((btn) => {
 });
 document.getElementById("tab-home").addEventListener("click", () => { renderPortal(); showScreen("portal"); });
 document.getElementById("tab-stats").addEventListener("click", () => { renderStats(); showScreen("stats"); });
+document.getElementById("btn-back-subject").addEventListener("click", () => { renderSubject(); showScreen("subject"); });
+document.getElementById("btn-note-review-all").addEventListener("click", () => startNoteReview());
+document.getElementById("exam-date-input").addEventListener("change", (e) => {
+  const v = e.target.value;
+  if (v && /^\d{4}-\d{2}-\d{2}$/.test(v)) localStorage.setItem(LS_EXAMDATE(cur.id), v);
+  else localStorage.removeItem(LS_EXAMDATE(cur.id));
+  renderExamCard();
+  renderPortal();
+});
+document.getElementById("btn-exam-clear").addEventListener("click", () => {
+  localStorage.removeItem(LS_EXAMDATE(cur.id));
+  renderExamCard();
+  renderPortal();
+});
 document.getElementById("btn-export").addEventListener("click", exportJSON);
 document.getElementById("file-import").addEventListener("change", (e) => {
   if (e.target.files[0]) importJSON(e.target.files[0]);

@@ -33,6 +33,14 @@
       <p class="flow-strip">合格への最短ルート：<strong>① 概念インプット</strong> → <strong>② 分野別ドリル</strong> → <strong>③ ミニテストで診断</strong> → <strong>④ 弱点集中</strong> → <strong>⑤ 公式の確認・模擬評価</strong> → <strong>⑥ 仕上げの復習</strong>。科目ページで現在地が分かります。</p>
     </div>
 
+    <div class="card activity-card">
+      <h2>学習の記録</h2>
+      <p id="portal-streak" class="streak-line">—</p>
+      <div id="portal-calendar" class="cal-grid" aria-label="直近4週間の学習カレンダー"></div>
+      <p class="muted small">直近4週間の学習日（色がついた日が学習した日、枠つきが今日）</p>
+      <p id="portal-forecast" class="forecast-line"></p>
+    </div>
+
     <h2 class="section-title">科目を選ぶ</h2>
     <div id="subject-cards"><!-- JSで生成 --></div>
   </section>
@@ -47,6 +55,16 @@
       <p id="roadmap-today-text" class="muted"></p>
       <button id="btn-roadmap-start" class="btn primary" type="button">▶ 今日はこちらから</button>
       <div class="roadmap-steps" id="roadmap-steps"><!-- JSで生成 --></div>
+    </div>
+
+    <div class="card exam-card">
+      <h2>試験日に向けて</h2>
+      <p id="exam-countdown" class="big-number" hidden></p>
+      <p id="exam-countdown-sub" class="muted">試験日を設定すると、ここに残り日数が表示されます（この端末にだけ保存されます）。</p>
+      <div class="exam-set">
+        <label class="small">試験日 <input type="date" id="exam-date-input"></label>
+        <button id="btn-exam-clear" class="btn" type="button">クリア</button>
+      </div>
     </div>
 
     <div class="card review-card">
@@ -116,6 +134,17 @@
       <button id="btn-done-home" class="btn primary" type="button">科目のトップへ戻る</button>
     </div>
     <div id="done-detail"><!-- ミニテスト結果の内訳（JSで生成） --></div>
+  </section>
+
+  <!-- 間違いノート画面 -->
+  <section id="screen-note" class="screen" hidden>
+    <button id="btn-back-subject" class="btn ghost" type="button">‹ 科目へ戻る</button>
+    <h2 class="subject-heading">間違いノート</h2>
+    <div class="card review-card">
+      <p id="note-summary" class="muted">読み込み中…</p>
+      <button id="btn-note-review-all" class="btn primary" type="button" hidden>✎ 間違えた問題をまとめて復習</button>
+    </div>
+    <div id="note-list"><!-- JSで生成 --></div>
   </section>
 
   <!-- 記録画面 -->

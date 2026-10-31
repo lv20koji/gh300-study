@@ -218,3 +218,32 @@ button.row .value::after { content: " ›"; }
     transition: none !important;
   }
 }
+
+/* ===== v3: 学習の記録（ストリーク・カレンダー・フォーキャスト） ===== */
+.activity-card h2 { margin-top: 0; font-size: 1.05rem; }
+.streak-line { font-size: 1.05rem; margin: 4px 0 12px; }
+.streak-line strong { color: var(--accent); font-size: 1.2rem; }
+.cal-grid {
+  display: grid; grid-template-columns: repeat(14, 1fr); gap: 4px;
+  margin-bottom: 8px;
+}
+.cal-day {
+  aspect-ratio: 1; border-radius: 3px;
+  background: var(--separator); opacity: 0.55;
+}
+.cal-day.on { background: var(--accent); opacity: 1; }
+.cal-day.today { outline: 2px solid var(--text); outline-offset: 1px; }
+.forecast-line { font-size: 0.92rem; margin: 10px 0 0; font-weight: 600; }
+.exam-line { font-weight: 600; color: var(--accent); margin: 0 0 12px; }
+
+/* ===== v3: 試験日カウントダウン ===== */
+.exam-card h2 { margin-top: 0; font-size: 1.05rem; }
+.exam-set { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 10px; }
+.exam-set input[type="date"] {
+  font: inherit; color: inherit;
+  border: 1px solid var(--separator); border-radius: 8px;
+  padding: 7px 10px; background: var(--card);
+}
+
+/* ===== v3: 間違いノート ===== */
+.note-item .btn { margin-top: 4px; }
